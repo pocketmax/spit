@@ -1,0 +1,2 @@
+# spit
+console.log wrapper
