@@ -98,6 +98,33 @@ module.exports = {
 		}
 
 	},
+	bool: function(str){
+		var pre = indent(nest.length - 1);
+
+		str += '...';
+
+		return {
+			pass: function(val){
+				if(val){
+					var tag = 'pass: ' + val;
+				} else {
+					var tag = 'pass'
+				}
+				var out = (str + tag);
+				console.log(build(out, pre).green.bold);
+			},
+			fail: function(val){
+				if(val){
+					var tag = 'fail: ' + val;
+				} else {
+					var tag = 'fail'
+				}
+				var out = (str + tag);
+				console.log(build(out, pre).red.bold);
+			}
+		}
+
+	},
 	bul: function(str, val){
 		var pre = indent(nest.length - 1);
 		var nestItm = _.last(nest);

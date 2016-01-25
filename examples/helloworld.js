@@ -28,10 +28,9 @@ sp.bul("first", 1);
 sp.bul("second", 2.22);
 sp.bul("third", '3rd');
 sp.bul("bool", true);
-sp.bul("obj", {foo: 'bar',test: {ing: 'testing123'}});
+sp.bul("obj", {foo: 'bar', test: {ing: 'testing123'}});
 sp.foot();
 
-// TODO nested blocks
 sp.head('parent block', true);
 sp.head('child block');
 sp.bul("first bul");
@@ -39,6 +38,14 @@ sp.bul("second bul");
 sp.bul("third bul");
 sp.foot();
 sp.foot();
+
+// TODO pass/fail items
+sp.head('pass/fail items');
+sp.bool("open car door").pass();
+sp.bool("put key in ignition").pass();
+sp.bool("start car").fail('car could not start');
+sp.foot();
+
 
 // TODO chained bullet list
 /*
