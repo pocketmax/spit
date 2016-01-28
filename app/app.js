@@ -2,169 +2,184 @@ var c = require('colors');
 var _ = require('lodash');
 var is = require('is');
 
-var count = 1;
-var headTxt = '';
-var headErr = false;
+var itm = {};
+var numCount = 0;
 
-var nest = [];
 
 // TODO auto indent blocks of info by detecting open head() without closing foot()
 
-var attr = function(obj,pre){
-	if(!pre) pre = '';
-	var str = JSON.stringify(obj, null, 2).replace(/[\r\n]/g, "\n" + pre);
-//	return JSON.stringify(obj, null, 2);
-	return pre + str;
 
+// turn object into string
+var objToStr = function(obj, arg1, arg2 ){
+	if(!arg1) arg1=null;
+	if(!arg2) arg2=2;
+
+	return JSON.stringify(obj, arg1, arg2);
 };
 
-var indent = function(num, str){
-	if(!num || num <1) num = 0;
-	if(!str) str = "\t";
 
-	return _.repeat(str, num);
+// prefix str with prefix
+var pre = function(str, prefix){
+
+	// split string by \n and append prefix to each line
+	var tmpArr = str.split("\n");
+	var tmpList = [];
+	_.each(tmpArr, function(val){
+		tmpList.push(prefix + val);
+	});
+
+	return tmpList.join("\n");
 };
 
-var build = function(lines, pre){
-	if(!_.isArray(lines)) lines = [lines];
-	if(pre){
-		_.each(lines, function(val, key){
-			lines[key] = pre + val;
-		});
+var header = function(str, chr){
+
+	if(_.isNumber(chr)) {
+		switch(chr){
+			case 1:
+				chr = '#';
+				break;
+			case 2:
+				chr = '*';
+				break;
+			case 3:
+				chr = '=';
+				break;
+			case 4:
+				chr = '-';
+				break;
+			case 5:
+				chr = '_';
+				break;
+			case 6:
+				chr = '.';
+				break;
+			default:
+				chr = '#';
+				break;
+		}
+	} else if(!chr){
+
+		chr = '#';
+
 	}
-	return lines.join("\n");
+
+	return  _.repeat(chr, str.length + 4) + "\n" +
+			chr + ' ' + str + ' ' + chr + "\n" +
+			_.repeat(chr, str.length + 4);
+
 };
 
 module.exports = {
 
-	head: function(str, err){
-		err = err || null;
-		var pre = indent(nest.length);
-		var nestItm = {
-			head: str,
-			err: err
-		};
-		nest.push(nestItm);
-		var top = _.repeat('*', str.length + 4);
-		var left = "* ";
-		var right = " *";
-		var bottom = _.repeat('=', str.length + 4);
+	log: function(str, arg1){
 
-		var out = [
-			top,
-			left + str + right,
-			bottom];
-		if(nestItm.err){
-			console.log(build(out, pre).red);
-		} else {
-			console.log(build(out, pre).green);
+		// num / bul check
+		if(itm.li === 'num'){
+			numCount++;
+			str = numCount + '. ' + str;
+
+		// num / bul check
+		} else if(itm.li === 'bul'){
+			str = '- ' + str;
 		}
 
-	},
-	foot: function(){
-		var nestItm = nest.pop();
-		var pre = indent(nest.length);
-		var str = nestItm.head;
-
-		var top = _.repeat('_', str.length + 4);
-		var left = "* ";
-		var right = " *";
-
-		var out = [
-			top,
-			left + str + right];
-		if(nestItm.err){
-			console.log(build(out, pre).red);
-		} else {
-			console.log(build(out, pre).green);
-		}
-
-	},
-	num: function(str, val){
-		var pre = indent(nest.length - 1);
-		var nestItm = _.last(nest);
-
-		var left = count + '. ';
-		if(val){
-			var out = (left + str + ': ').bold + val;
-		} else {
-			var out = left + str.bold;
-		}
-		count++;
-		if(nestItm.err){
-			console.log(build(out, pre).red);
-		} else {
-			console.log(build(out, pre).yellow);
-		}
-
-	},
-	bool: function(str){
-		var pre = indent(nest.length - 1);
-
-		str += '...';
-
-		return {
-			pass: function(val){
-				if(val){
-					var tag = 'pass: ' + val;
-				} else {
-					var tag = 'pass'
-				}
-				var out = (str + tag);
-				console.log(build(out, pre).green.bold);
-			},
-			fail: function(val){
-				if(val){
-					var tag = 'fail: ' + val;
-				} else {
-					var tag = 'fail'
-				}
-				var out = (str + tag);
-				console.log(build(out, pre).red.bold);
-			}
-		}
-
-	},
-	bul: function(str, val){
-		var pre = indent(nest.length - 1);
-		var nestItm = _.last(nest);
-
-		var left = '- ';
-
-		if(val){
+		if(arg1){
 			var sep = ': ';
-			if(is.decimal(val)) {
-				val = c.gray(val);
-			} else if(_.isNumber(val)){
-				val = c.red(val);
-			} else if(_.isBoolean(val)){
-				val = c.magenta(val);
-			} else if(_.isPlainObject(val)){
-				val = c.green(attr(val, pre));
-				var sep = "...\n";
+			var rawStr = str + sep + arg1;
+
+			 if(is.decimal(arg1)) {
+				 arg1 = c.gray(arg1);
+			 } else if(_.isNumber(arg1)){
+				 arg1 = c.red(arg1);
+			 } else if(_.isBoolean(arg1)){
+				 arg1 = c.magenta(arg1);
+			 } else if(_.isPlainObject(arg1)){
+				 arg1 = c.green(objToStr(arg1));
+				 var sep = "...\n";
+			 } else {
+				 arg1 = c.cyan(arg1);
+			 }
+
+			var out = str.bold + sep + arg1;
+
+		} else {
+			var rawStr = str;
+			var out = str;
+		}
+
+		// bool check
+		if( itm.bool === false ){
+			rawStr += '...fail';
+		} else if( itm.bool === true ){
+			rawStr += '...pass';
+		}
+
+
+		// header check
+		if(itm.header){
+			if(itm.header === true) {
+				out = header(rawStr);
 			} else {
-				val = c.cyan(val);
+				out = header(rawStr, itm.header);
 			}
-
-			var out = (left + str + sep).bold + val;
-
-		} else {
-
-			var out = left + str.bold;
-
+			delete itm.header;
 		}
-		if(nestItm.err){
-			console.log(build(out, pre).red);
-		} else {
-			console.log(build(out, pre).yellow);
+
+		// tmpTab check
+		if(itm.tmpTab){
+			out = pre(out,"\t");
+			delete itm.tmpTab;
 		}
+
+		// tab count check
+		if(itm.tabCount){
+			out = pre(out,_.repeat("\t", itm.tabCount));
+		}
+
+		// bool check
+		if( itm.bool === false ){
+			out = c.red(out);
+		} else if( itm.bool === true ){
+			out = c.green(out);
+		} else {
+			out = c.yellow(out);
+		}
+
+		delete itm.bool;
+		console.log(out);
 
 	},
-	err: function(str){
-
-		var left = "* ";
-		console.log((left + str).red);
-
+	head: function(arg){
+		itm.header=arg || true;
+		return this;
+	},
+	fail: function(){
+		itm.bool = false;
+		return this;
+	},
+	pass: function(){
+		itm.bool = true;
+		return this;
+	},
+	num: function(){
+		itm.li = 'num';
+		return this;
+	},
+	bul: function(){
+		itm.li = 'bul';
+		return this;
+	},
+	tab: function(arg){
+		if(arg === 1){
+			if(!itm.tabCount) itm.tabCount=0;
+			itm.tabCount++;
+		} else if(arg === 0) {
+			itm.tabCount--;
+			if(itm.tabCount<0) itm.tabCount=0;
+		} else {
+			itm.tmpTab = true;
+		}
+		return this;
 	}
 
 };
